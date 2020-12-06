@@ -1,0 +1,188 @@
+<html lang="ko">
+    <head>
+        <meta charset="utf-8">
+        <title> 단어장 | mynote </title>
+        <link rel="stylesheet" href="./css/style.css">    
+        
+        <script src="https://www.gstatic.com/firebasejs/7.5.0/firebase.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.5.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.5.0/firebase-auth.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.5.0/firebase-firestore.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.5.0/firebase-database.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.5.0/firebase-storage.js"></script>
+        
+        <script src="https://code.jquery.com/jquery-2.2.1.js"></script>
+        
+        <script src="./js/app.js"></script>
+        
+
+    </head>
+    
+    <body>
+        <header>
+            <div class="topNavBar">
+                <ul>
+                    <a href="./index.html"><li class="title"><h1 class="title">단어장</h1></li></a>
+                    <a href="./login.html"><li class="signin" id="signinBtn">로그인</li></a>
+                    <li class="signout" id="signoutBtn">로그아웃</li>
+                    <a href="./signup.html"><li class="signup" id="signupBtn">가입</li></a>
+                    <li class="userInfo" id="userInfo"></li>
+                </ul>
+            </div>
+        </header>
+        
+        <div class="menuNavBar">
+            <ul>
+                <a href="./mynote.html"><li class="notes">내 노트</li></a>
+                <a href="./wordtest.html"><li class="test">쪽지시험</li></a>
+                <a href="./share.html"><li class="share">공유</li></a>
+            </ul>
+        </div>
+        
+        <h1 align="center" style=margin-top:30px;> 노트 편집 </h1>
+        
+        <div class="note" id="note">
+            <!--
+            <table>
+                <tr>
+                    <th>단어</th>
+                    <th>뜻</th>
+                </tr>
+                <tr>
+                    <td>단어1</td>
+                    <td>뜻1</td>
+                </tr>
+                <tr>
+                    <td>단어2</td>
+                    <td>뜻2</td>
+                </tr>
+                <tr>
+                    <td>단어3</td>
+                    <td>뜻3</td>
+                </tr>
+                <tr>
+                    <td>단어4</td>
+                    <td>뜻4</td>
+                </tr>
+                <tr>
+                    <td>단어5</td>
+                    <td>뜻5</td>
+                </tr>
+                <tr>
+                    <td>단어6</td>
+                    <td>뜻6</td>
+                </tr>
+                <tr>
+                    <td>단어7</td>
+                    <td>뜻7</td>
+                </tr>
+                <tr>
+                    <td>단어8</td>
+                    <td>뜻8</td>
+                </tr>
+                <tr>
+                    <td>단어9</td>
+                    <td>뜻9</td>
+                </tr>
+                <tr>
+                    <td>단어10</td>
+                    <td>뜻10</td>
+                </tr>
+            </table>
+            -->
+            <script>$("#note").html(createEditNote());</script>
+        </div>
+        
+        <br><br><br><br>
+        
+        <center style="margin-bottom: 30px;">
+            <div id="noteListItem" style="padding-bottom: 20px; width: 50%; padding: 5% 0 5% 0">
+
+
+
+            </div>
+        </center>
+        <br><br>
+
+    </body>
+</html>
+
+<script>
+    var userUid = "?";
+    var db = firebase.firestore();
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+        // User is signed in.
+        userUid = user.uid;
+            
+        // When userUid load completed: Excute All using userUid
+        drawNoteList(1);
+
+        } else {
+        // No user is signed in.
+        //alert("login x");
+        }
+        userUid = user.uid;
+    });
+    
+    function drawNoteList(page) {
+        var title = new Array(10);
+        var noteList = [];
+        var count = 0;
+        
+        for (var i = 0; i < 10; i++) title[i] = $('#' + 'title' + (i+1) );  //title[i].html(); (i = 0~9)
+        
+        //get user's All note List
+        db.collection('user').doc(userUid).collection('noteList').where("searchToken", "==", true).get().then(function(querySnapshot) {
+            querySnapshot.forEach(function(doc) {
+                // doc.data() is never undefined for query doc snapshots
+                console.log(doc.id, " => ", doc.data());
+                noteList[count] = doc.id;
+                count++;
+                
+                             
+                $('#noteListItem').append("<div onclick='showNote(\"" + doc.id + "\")' style='float: left; width: 100%; border:1px solid #ddd; '>\
+                    <div style='float: left; width: width: 15%;'>\
+                        <img style='margin-top: 4px;float: left; width: 32px;' src='./img/note.jpg'>\
+                    </div>\
+                    <h2 style='margin: 10px; font-size: 20px; text-align: left;  float: left; width: 85%;'>" + doc.id + "</h2>\
+                </div>\
+                ")  
+
+                if(count == querySnapshot.size)
+                {
+                    $('#noteListItem').append("<div style='float: left; width: 100%; height: 30px;'>\
+                    </div>\
+                    ")  
+                }
+                
+
+                
+            });
+            
+        })
+        .catch(function(error) {
+            console.log("Error getting documents: ", error);
+        });
+        
+        //for(var i = 0; i < 10; i++) alert(title[i].html("<img src='./img/note.jpg'> " + noteList[i + (10 * (page - 1))]));
+    }
+    
+    
+    function showNote(docId)
+    {
+        db.collection("user").doc(userUid).collection("noteList").doc(docId).get().then(function(doc) {
+            if(doc.exists) {
+                var noteData = doc.data();
+                
+                $('#noteTitle').val(doc.id);
+                
+                for(var i = 1; i <= 10; i++) {
+                    $('#word' + i).val(noteData['word' + i]);
+                    $('#mean' + i).val(noteData['mean' + i]);
+                }
+            }
+        })
+       
+    }
+</script>
